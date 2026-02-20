@@ -6,9 +6,11 @@ build-backend = "setuptools.build_meta"
 name = "domain-check-mcp"
 version = "0.1.0"
 description = "RDAP-first domain availability checking MCP server"
+readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{ name = "Ing. Luca Stucchi" }]
+authors = [{ name = "Ing. Luca Stucchi", email = "luca.stucchi@gmail.com" }]
+keywords = ["mcp", "domain", "rdap", "whois", "availability"]
 classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
