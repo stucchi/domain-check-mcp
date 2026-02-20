@@ -22,7 +22,7 @@ async def check_domain(
 ) -> str:
     """Check if a domain name is available for registration.
 
-    Currently supports .com domains via RDAP lookup.
+    Supports 500+ TLDs via RDAP (including .com, .net, .org, .app, .dev, .io, and many more) plus .de and .cn via WHOIS.
     """
     try:
         result = engine.check(domain)

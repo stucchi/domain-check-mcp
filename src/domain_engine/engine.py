@@ -3,9 +3,12 @@ from __future__ import annotations
 import re
 
 from domain_engine.adapters.base import TLDAdapter
-from domain_engine.adapters.com import ComAdapter
+from domain_engine.adapters.rdap import RDAPAdapter
+from domain_engine.adapters.whois import WhoisAdapter
 from domain_engine.exceptions import InvalidDomainError, UnsupportedTLDError
 from domain_engine.models import DomainCheckResult
+from domain_engine.tld_registry import RDAP_REGISTRY
+from domain_engine.whois_registry import WHOIS_REGISTRY
 
 _DOMAIN_RE = re.compile(
     r"^(?!-)([a-z0-9-]{1,63})(?<!-)\.([a-z]{2,})$"
@@ -41,5 +44,8 @@ class DomainCheckEngine:
 
 def create_engine() -> DomainCheckEngine:
     engine = DomainCheckEngine()
-    engine.register_adapter(ComAdapter())
+    for tld, url in RDAP_REGISTRY.items():
+        engine.register_adapter(RDAPAdapter(tld, url))
+    for tld, (server, pattern) in WHOIS_REGISTRY.items():
+        engine.register_adapter(WhoisAdapter(tld, server, pattern))
     return engine
