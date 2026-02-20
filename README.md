@@ -95,3 +95,5 @@ pytest
 ## License
 
 MIT
+
+<!-- mcp-name: io.github.stucchi/domain-check -->
