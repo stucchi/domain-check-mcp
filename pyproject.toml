@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "domain-check-mcp"
+version = "0.1.0"
+description = "RDAP-first domain availability checking MCP server"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "Ing. Luca Stucchi" }]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "httpx",
+    "mcp[cli]",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-httpx",
+]
+
+[project.scripts]
+domain-check-mcp = "domain_engine.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

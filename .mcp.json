@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "domain-check": {
+      "type": "stdio",
+      "command": "/Users/lucastucchi/Projects/mcp/domain-check-mcp/.venv/bin/python",
+      "args": ["-m", "domain_engine"]
+    }
+  }
+}
