@@ -1,5 +1,6 @@
 # domain-check-mcp
 
+[![PyPI](https://img.shields.io/pypi/v/domain-check-mcp)](https://pypi.org/project/domain-check-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-blue)](https://www.python.org/)
 ![MCP Server](https://badge.mcpx.dev?type=server&features=tools 'Model Context Protocol Server')
@@ -63,6 +64,14 @@ All major gTLDs and many ccTLDs with RDAP support, sourced from the [IANA RDAP B
 |-----|-------------|
 | .de | whois.denic.de |
 | .cn | whois.cnnic.cn |
+| .fj | www.whois.fj |
+| .gs | whois.nic.gs |
+| .bayern | whois.nic.bayern |
+| .cat | whois.nic.cat |
+| .eus | whois.nic.eus |
+| .radio | whois.nic.radio |
+| .scot | whois.nic.scot |
+| .sport | whois.nic.sport |
 
 ## How it works
 
