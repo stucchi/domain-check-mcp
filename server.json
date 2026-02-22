@@ -7,12 +7,19 @@
     "url": "https://github.com/stucchi/domain-check-mcp",
     "source": "github"
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/stucchi/domain-check-mcp/main/assets/icon.png",
+      "mimeType": "image/png",
+      "sizes": ["1024x1024"]
+    }
+  ],
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "domain-check-mcp",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "transport": {
         "type": "stdio"
       }
