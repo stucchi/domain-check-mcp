@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "domain-check-mcp"
-version = "1.0.1"
+version = "1.1.0"
 description = "RDAP-first domain availability checking MCP server"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "httpx",
-    "mcp[cli]",
+    "mcp[cli]>=1.26.0",
 ]
 
 [project.optional-dependencies]
