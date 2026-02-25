@@ -7,7 +7,7 @@ from mcp import types
 from mcp.server.fastmcp import FastMCP
 
 from domain_engine.engine import create_engine
-from domain_engine.exceptions import DomainCheckError
+from domain_engine.exceptions import DomainCheckError, RateLimitedError
 
 _VIEW_URI = "ui://domain-check/view.html"
 _BULK_VIEW_URI = "ui://domain-check/bulk-view.html"
@@ -42,6 +42,13 @@ async def check_domain(
     """
     try:
         result = engine.check(domain)
+    except RateLimitedError as exc:
+        error_data = {"error": str(exc), "rate_limited": True, "domain": domain}
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=_format(error_data))],
+            structured_content=error_data,
+            is_error=True,
+        )
     except DomainCheckError as exc:
         error_data = {"error": str(exc)}
         return types.CallToolResult(
@@ -83,6 +90,8 @@ async def check_domains(
         try:
             result = engine.check(domain)
             results.append(result.to_dict())
+        except RateLimitedError as exc:
+            results.append({"domain": domain, "available": None, "status": "rate_limited", "error": str(exc)})
         except DomainCheckError as exc:
             results.append({"domain": domain, "available": None, "status": "error", "error": str(exc)})
 
@@ -90,6 +99,7 @@ async def check_domains(
         "total": len(results),
         "available": sum(1 for r in results if r.get("available") is True),
         "registered": sum(1 for r in results if r.get("available") is False),
+        "rate_limited": sum(1 for r in results if r.get("status") == "rate_limited"),
         "errors": sum(1 for r in results if r.get("status") == "error"),
     }
 
@@ -172,6 +182,7 @@ _BULK_VIEW_HTML = """\
 
   .summary-item.s-available .summary-num { color: light-dark(#16a34a, #4ade80); }
   .summary-item.s-registered .summary-num { color: light-dark(#dc2626, #f87171); }
+  .summary-item.s-ratelimited .summary-num { color: light-dark(#9333ea, #c084fc); }
   .summary-item.s-errors .summary-num { color: light-dark(#d97706, #fbbf24); }
 
   /* Results table */
@@ -199,6 +210,7 @@ _BULK_VIEW_HTML = """\
 
   .row.r-available .row-icon { color: light-dark(#16a34a, #4ade80); }
   .row.r-registered .row-icon { color: light-dark(#dc2626, #f87171); }
+  .row.r-ratelimited .row-icon { color: light-dark(#9333ea, #c084fc); }
   .row.r-error .row-icon { color: light-dark(#d97706, #fbbf24); }
 
   .row-domain {
@@ -219,6 +231,7 @@ _BULK_VIEW_HTML = """\
 
   .row.r-available .row-status { color: light-dark(#16a34a, #4ade80); }
   .row.r-registered .row-status { color: light-dark(#dc2626, #f87171); }
+  .row.r-ratelimited .row-status { color: light-dark(#9333ea, #c084fc); }
   .row.r-error .row-status { color: light-dark(#d97706, #fbbf24); }
 
   /* Loading */
@@ -273,6 +286,7 @@ function renderSummary(summary) {
     '<div class="summary-item"><div class="summary-num">' + summary.total + '</div><div class="summary-label">Total</div></div>' +
     '<div class="summary-item s-available"><div class="summary-num">' + summary.available + '</div><div class="summary-label">Available</div></div>' +
     '<div class="summary-item s-registered"><div class="summary-num">' + summary.registered + '</div><div class="summary-label">Registered</div></div>' +
+    (summary.rate_limited > 0 ? '<div class="summary-item s-ratelimited"><div class="summary-num">' + summary.rate_limited + '</div><div class="summary-label">Rate Limited</div></div>' : '') +
     (summary.errors > 0 ? '<div class="summary-item s-errors"><div class="summary-num">' + summary.errors + '</div><div class="summary-label">Errors</div></div>' : '') +
   '</div>';
 }
@@ -282,7 +296,9 @@ function renderRows(results) {
   for (var i = 0; i < results.length; i++) {
     var r = results[i];
     var cls, icon, label;
-    if (r.status === "error") {
+    if (r.status === "rate_limited") {
+      cls = "r-ratelimited"; icon = "&#9201;"; label = "rate limited — retry later";
+    } else if (r.status === "error") {
       cls = "r-error"; icon = "&#9888;"; label = r.error || "error";
     } else if (r.available) {
       cls = "r-available"; icon = "&#10003;"; label = "available";
@@ -382,6 +398,11 @@ _VIEW_HTML = """\
     border-bottom: 3px solid light-dark(#d97706, #fbbf24);
   }
 
+  .result.rate-limited {
+    background: light-dark(#faf5ff, #3b0764);
+    border-bottom: 3px solid light-dark(#9333ea, #c084fc);
+  }
+
   .status-icon {
     font-size: 44px;
     line-height: 1;
@@ -391,6 +412,7 @@ _VIEW_HTML = """\
   .available .status-icon { color: light-dark(#16a34a, #4ade80); }
   .registered .status-icon { color: light-dark(#dc2626, #f87171); }
   .error .status-icon { color: light-dark(#d97706, #fbbf24); }
+  .rate-limited .status-icon { color: light-dark(#9333ea, #c084fc); }
 
   .domain-name {
     font-family: var(--font-mono, ui-monospace, monospace);
@@ -410,6 +432,7 @@ _VIEW_HTML = """\
   .available .status-label { color: light-dark(#16a34a, #4ade80); }
   .registered .status-label { color: light-dark(#dc2626, #f87171); }
   .error .status-label { color: light-dark(#d97706, #fbbf24); }
+  .rate-limited .status-label { color: light-dark(#9333ea, #c084fc); }
 
   .tld-info {
     margin-top: 10px;
@@ -466,6 +489,17 @@ function esc(s) {
 
 function render(data) {
   var el = document.getElementById("content");
+
+  if (data.rate_limited) {
+    el.innerHTML =
+      '<div class="result rate-limited">' +
+        '<div class="status-icon">&#9201;</div>' +
+        '<div class="domain-name">' + esc(data.domain || "") + '</div>' +
+        '<div class="status-label">Rate Limited</div>' +
+        '<div class="tld-info">This registry has aggressive rate limits. Try again in a few minutes.</div>' +
+      '</div>';
+    return;
+  }
 
   if (data.error) {
     el.innerHTML =

@@ -37,7 +37,18 @@ class RDAPAdapter(TLDAdapter):
             )
 
         if resp.status_code == 429:
-            raise RateLimitedError(f"Rate limited while checking {domain}")
+            raise RateLimitedError(f"Rate limited while checking {domain}. Try again later.")
+
+        if resp.status_code == 403:
+            body = resp.text.lower()
+            if "number of allowed queries exceeded" in body or "rate" in body:
+                raise RateLimitedError(
+                    f"Rate limited by .{self._tld} registry while checking {domain}. "
+                    "This registry has aggressive rate limits — try again in a few minutes."
+                )
+            raise DomainCheckError(
+                f"Access denied (403) by .{self._tld} registry for {domain}"
+            )
 
         if resp.status_code == 200:
             return DomainCheckResult(

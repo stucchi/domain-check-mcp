@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import socket
 
-from domain_engine.exceptions import DomainCheckError
+from domain_engine.exceptions import DomainCheckError, RateLimitedError
 from domain_engine.models import DomainCheckResult
 
 from .base import TLDAdapter
@@ -35,7 +35,14 @@ class WhoisAdapter(TLDAdapter):
         except OSError as exc:
             raise DomainCheckError(f"WHOIS connection failed for {domain}: {exc}")
 
-        if self._not_found_pattern in raw_response.lower():
+        lower = raw_response.lower()
+        if "number of allowed queries exceeded" in lower or "queries exceeded" in lower:
+            raise RateLimitedError(
+                f"Rate limited by .{self._tld} registry while checking {domain}. "
+                "This registry has aggressive rate limits — try again in a few minutes."
+            )
+
+        if self._not_found_pattern in lower:
             return DomainCheckResult(
                 domain=domain,
                 available=True,
